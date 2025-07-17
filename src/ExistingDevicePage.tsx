@@ -544,13 +544,18 @@ function ExistingDevicePage() {
 
                         {calibrationStep === 3 && (
                             <>
-                                <h3 style={{ textAlign: 'center', color: '#28a745', marginTop: 0 }}>Calibration Successful!</h3>
+                                <h3 style={{ color: '#28a745' }}>Calibration Successful!</h3>
                                 <p style={{ textAlign: 'center' }}>
                                     You can now place an object on the scale and test the calibration.
                                 </p>
 
                                 <div className="card" style={{ padding: '1rem', margin: '1.5rem 0', backgroundColor: 'var(--color-background)' }}>
-                                    <h4 style={{ marginTop: 0, marginBottom: '0.75rem', textAlign: 'center', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>
+                                    <h4 style={{
+                                        marginTop: 0,
+                                        marginBottom: '0.75rem',
+                                        borderBottom: '1px solid var(--color-border)',
+                                        paddingBottom: '0.5rem'
+                                    }}>
                                         New Calibration Data
                                     </h4>
                                     <p><strong>Device:</strong> {libra.device.model}-{libra.device.number}</p>
