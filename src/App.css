@@ -1,0 +1,345 @@
+/* /home/riley/projects/commission/src/App.css */
+
+/* 1. CSS Variables & Theming
+----------------------------------------------------------------*/
+:root {
+  /* Font & Sizing */
+  --font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+  --font-size: 16px;
+  --line-height: 1.5;
+  --border-radius: 8px;
+  --padding-y: 0.6em;
+  --padding-x: 1.2em;
+
+  /* Light Theme Colors */
+  --color-text: #213547;
+  --color-background: #f6f6f6;
+  --color-primary: #396cd8;
+  --color-primary-hover: #535bf2;
+  --color-surface: #ffffff;
+  --color-border: #cccccc;
+  --color-shadow: rgba(0, 0, 0, 0.15);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Dark Theme Colors */
+    --color-text: rgba(255, 255, 255, 0.87);
+    --color-background: #242424;
+    --color-primary-hover: #24c8db;
+    --color-surface: #1a1a1a;
+    --color-border: #555555;
+    --color-shadow: rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* 2. Base & Reset
+----------------------------------------------------------------*/
+body {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: var(--font-size);
+  line-height: var(--line-height);
+  font-weight: 400;
+
+  color: var(--color-text);
+  background-color: var(--color-background);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* 3. Layout
+----------------------------------------------------------------*/
+.container {
+  margin: 0 auto;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 600px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  width: 100%;
+}
+
+.button-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  width: 100%;
+  max-width: 400px;
+}
+
+/* 4. Navigation
+----------------------------------------------------------------*/
+nav {
+  padding: 1rem;
+  text-align: center;
+  background-color: var(--color-surface);
+  box-shadow: 0 2px 4px var(--color-shadow);
+  border-bottom: 1px solid var(--color-border);
+}
+
+nav a {
+  font-weight: 500;
+  color: var(--color-primary);
+  text-decoration: none;
+  padding: 0 0.5rem;
+  transition: color 0.25s;
+}
+
+nav a:hover {
+  color: var(--color-primary-hover);
+}
+
+/* 5. Typography
+----------------------------------------------------------------*/
+h1 {
+  font-size: 2.2rem;
+  margin-bottom: 0.5rem;
+}
+
+h2 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  text-align: left;
+  width: 100%;
+  max-width: 400px; /* Align with form elements */
+}
+
+p {
+  margin-top: 1rem;
+  max-width: 50ch; /* Improve readability */
+}
+
+/* 6. Forms & Controls (Buttons, Inputs, Selects)
+----------------------------------------------------------------*/
+input,
+button,
+select {
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+  padding: var(--padding-y) var(--padding-x);
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  transition: border-color 0.25s, background-color 0.25s;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+input:focus,
+button:focus-visible,
+select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-hover);
+}
+
+/* Style for read-only inputs to distinguish them from editable ones */
+input[readOnly] {
+  background-color: var(--color-background);
+  cursor: default;
+  opacity: 0.7;
+}
+
+input[readOnly]:focus {
+  box-shadow: none;
+  border-color: var(--color-border);
+}
+
+button {
+  cursor: pointer;
+  width: auto; /* Buttons should size to their content */
+  box-shadow: 0 2px 2px var(--color-shadow);
+}
+
+button:hover {
+  border-color: var(--color-primary-hover);
+}
+
+button:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 1px var(--color-shadow);
+}
+
+/* Primary action button style */
+.button {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.button:hover {
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+select {
+  cursor: pointer;
+  /* Custom arrow */
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 1em;
+  padding-right: 2.5rem;
+}
+
+/* 7. Cards & Data Display
+----------------------------------------------------------------*/
+.card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  margin-top: 2rem;
+  width: 100%;
+  max-width: 400px;
+  text-align: left;
+  box-shadow: 0 2px 4px var(--color-shadow);
+}
+
+.card h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.75rem;
+}
+
+.card p {
+  margin: 0.5rem 0;
+  max-width: none; /* Override default p styling */
+}
+
+.card p strong {
+  display: inline-block;
+  width: 90px; /* Align values */
+}
+
+
+/* 8. Modal / Pop-up
+----------------------------------------------------------------*/
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+.error-modal-overlay {
+  z-index: 2000;
+}
+
+.modal-content {
+  background-color: var(--color-surface);
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  box-shadow: 0 5px 15px var(--color-shadow);
+  width: 90%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-content h2 {
+  margin-top: 0;
+  text-align: center;
+}
+
+.modal-list {
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+  gap: 1rem;
+}
+
+.list-item:last-child {
+  border-bottom: none;
+}
+
+.list-item span small {
+  color: var(--color-text);
+  opacity: 0.7;
+}
+
+.modal-content > button {
+  align-self: center;
+  margin-top: 1rem;
+}
+
+/* 9. Component-Specific Styles
+----------------------------------------------------------------*/
+.form-field {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form-field label {
+  flex-basis: 90px; /* Match the width of the 'strong' tag for alignment */
+  flex-shrink: 0;
+  text-align: left;
+}
+
+.form-field input {
+  flex-grow: 1;
+}
+
+.button-group {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+/* In App.css */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.form-row {
+  display: contents; /* Allows children to be direct members of the grid */
+}
