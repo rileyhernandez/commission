@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
-import { invoke } from '@tauri-apps/api/core';
-import type { InvokeArgs } from '@tauri-apps/api/tauri';
+import { invoke, InvokeArgs } from '@tauri-apps/api/core';
 
 // Options for the hook, allowing for side-effects on success or error
 interface UseTauriCommandOptions<T, P> {
