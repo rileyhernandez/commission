@@ -10,7 +10,7 @@ use scale::scale::{DisconnectedScale, Scale};
 use reqwest;
 
 pub const CONFIG_PATH: &str = "/home/riley/.config/libra/config.toml";
-pub const CONFIG_BACKEND_PATH: &str = "http://127.0.0.1:8080";
+pub const CONFIG_BACKEND_PATH: &str = "https://us-west1-back-of-house-backend.cloudfunctions.net/test-function";
 
 mod device;
 mod error;
