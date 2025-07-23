@@ -1,3 +1,4 @@
+use std::env;
 use std::path::Path;
 use std::sync::Mutex;
 use menu::device::{Device, Model};
@@ -9,7 +10,7 @@ use menu::read::Read;
 use scale::scale::{DisconnectedScale, Scale};
 use reqwest;
 
-pub const CONFIG_PATH: &str = "/home/riley/.config/libra/config.toml";
+pub const CONFIG_PATH: &str = "libra/config.toml";
 pub const CONFIG_BACKEND_PATH: &str = "https://us-west1-back-of-house-backend.cloudfunctions.net/test-function";
 
 mod device;
@@ -30,19 +31,22 @@ async fn get_config_from_cloud(device: Device) -> Result<Libra, AppError> {
 }
 #[tauri::command(async)]
 async fn load_existing_config_file() -> Result<Vec<Libra>, AppError> {
-    let path = Path::new(CONFIG_PATH);
+    let path = Path::new(&env::var("HOME")?)
+        .join(CONFIG_PATH);
     let libras = Libra::read_as_vec(&path)?;
     Ok(libras)
 }
 #[tauri::command(async)]
 async fn remove_from_config_file(device: Device) -> Result<(), AppError> {
-    let path = Path::new(CONFIG_PATH);
+    let path = Path::new(&env::var("HOME")?)
+        .join(CONFIG_PATH);
     Libra::remove_from_config_file(device, &path)?;
     Ok(())
 }
 #[tauri::command(async)]
 async fn add_to_config_file(libra: Libra) -> Result<(), AppError> {
-    let path = Path::new(CONFIG_PATH);
+    let path = Path::new(&env::var("HOME")?)
+        .join(CONFIG_PATH);
     Libra::add_to_config_file(libra, &path)?;
     Ok(())
 }

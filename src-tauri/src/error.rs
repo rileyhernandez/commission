@@ -26,6 +26,8 @@ pub enum AppError {
     InvalidResponse(String),
     #[error("No empty calibration value")]
     NoEmptyCalibrationValue,
+    #[error("{0}")]
+    VarError(#[from] std::env::VarError)
 }
 
 impl Serialize for AppError {
