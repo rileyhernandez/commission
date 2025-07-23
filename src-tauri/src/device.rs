@@ -1,13 +1,13 @@
-use std::fmt;
-use std::path::Path;
-use std::time::Duration;
-use serde::{Deserialize, Serialize};
 use crate::error::AppError;
 use menu::backend;
 use menu::device::Device;
+use serde::{Deserialize, Serialize};
+use std::fmt;
+use std::path::Path;
+use std::time::Duration;
 // use menu::config::{Config, Read};
-use menu::libra::{Config, Libra};
 use crate::{CONFIG_BACKEND_PATH, CONFIG_PATH};
+use menu::libra::{Config, Libra};
 
 const BACKEND_URL: &str = "http://127.0.0.1:8080";
 

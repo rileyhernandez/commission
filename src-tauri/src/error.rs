@@ -1,5 +1,5 @@
-use serde::{Serialize, Serializer};
 use log::error;
+use serde::{Serialize, Serializer};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -27,7 +27,7 @@ pub enum AppError {
     #[error("No empty calibration value")]
     NoEmptyCalibrationValue,
     #[error("{0}")]
-    VarError(#[from] std::env::VarError)
+    VarError(#[from] std::env::VarError),
 }
 
 impl Serialize for AppError {

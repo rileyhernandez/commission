@@ -1,4 +1,4 @@
-use crate::device::{ExistingDevice};
+use crate::device::ExistingDevice;
 use crate::error::AppError;
 use menu::device::Device;
 use scale::scale::Scale;
@@ -9,7 +9,9 @@ pub struct AppData {
 }
 impl AppData {
     pub fn new() -> Self {
-        Self { scale: None, empty_calibration_reading: None }
+        Self {
+            scale: None,
+            empty_calibration_reading: None,
+        }
     }
-
 }
