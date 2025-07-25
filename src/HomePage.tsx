@@ -70,18 +70,19 @@ function HomePage() {
     const handlePhidgetSelect = (phidgetId: number) => {
         const defaultLibra: Libra = {
             device: {
-                model: Model.LibraV0, // Default model for new devices
-                number: 0, // Placeholder: The backend will assign the final device number.
+                model: Model.LibraV0,
+                number: 0,
             },
             config: {
-                phidgetId,
+                phidget_id: phidgetId, // Changed from phidgetId
                 gain: 1,
                 offset: 0,
-                loadCellId: 0,
+                load_cell_id: 0, // Changed from loadCellId
                 location: "",
                 ingredient: "",
             },
         };
+
 
         setNewLibra(defaultLibra);
         setSelectionModalOpen(false); // Close the phidget selection modal
@@ -122,9 +123,10 @@ function HomePage() {
 
     // A helper to make form labels more readable (e.g., "loadCellId" -> "Load Cell Id")
     const formatLabel = (s: string) => {
-        const withSpaces = s.replace(/([A-Z])/g, ' $1');
+        const withSpaces = s.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1');
         return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1);
     };
+
 
     return (
         <>
@@ -175,7 +177,7 @@ function HomePage() {
 
                             <div className="form-grid" style={{marginTop: '1.5rem'}}>
                                 {Object.entries(newLibra.config).map(([key, value]) => {
-                                    const isEditable = ['location', 'ingredient', 'loadCellId'].includes(key);
+                                    const isEditable = ['location', 'ingredient', 'load_cell_id'].includes(key); // Changed from 'loadCellId'
                                     const label = formatLabel(key);
 
                                     return (

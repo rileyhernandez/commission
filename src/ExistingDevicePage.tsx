@@ -301,9 +301,10 @@ function ExistingDevicePage() {
 
     // A helper to make form labels more readable (e.g., "loadCellId" -> "Load Cell Id")
     const formatLabel = (s: string) => {
-        const withSpaces = s.replace(/([A-Z])/g, ' $1');
+        const withSpaces = s.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1');
         return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1);
     };
+
 
 
     // Combine all loading states for disabling parts of the UI

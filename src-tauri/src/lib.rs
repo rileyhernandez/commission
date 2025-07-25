@@ -1,37 +1,18 @@
-use crate::device::{validate, ExistingDevice};
 use crate::error::AppError;
-use crate::state::AppData;
+use crate::state::{add_or_create_config, AppData};
 use menu::device::{Device, Model};
 use menu::libra::{Config, Libra};
 use menu::read::Read;
-use reqwest;
 use scale::scale::{DisconnectedScale, Scale};
 use std::env;
 use std::path::Path;
 use std::sync::Mutex;
+use tauri::Manager;
 
 pub const CONFIG_PATH: &str = ".config/libra/config.toml";
-pub const CONFIG_BACKEND_PATH: &str =
-    "https://us-west1-back-of-house-backend.cloudfunctions.net/test-function";
 
-mod device;
 mod error;
 mod state;
-
-#[tauri::command(async)]
-async fn get_config_from_cloud(device: Device) -> Result<Libra, AppError> {
-    let url = format!("{}/{}", CONFIG_BACKEND_PATH, device);
-    let response = reqwest::Client::new()
-        .get(url)
-        .timeout(std::time::Duration::from_secs(60))
-        .send()
-        .await?
-        .text()
-        .await?;
-    let config: Config = serde_json::from_str(&response)?;
-    let libra = Libra { config, device };
-    Ok(libra)
-}
 #[tauri::command(async)]
 async fn load_existing_config_file() -> Result<Vec<Libra>, AppError> {
     let path = Path::new(&env::var("HOME")?).join(CONFIG_PATH);
@@ -47,7 +28,7 @@ async fn remove_from_config_file(device: Device) -> Result<(), AppError> {
 #[tauri::command(async)]
 async fn add_to_config_file(libra: Libra) -> Result<(), AppError> {
     let path = Path::new(&env::var("HOME")?).join(CONFIG_PATH);
-    Libra::add_to_config_file(libra, &path)?;
+    add_or_create_config(libra, &path)?;
     Ok(())
 }
 #[tauri::command(async)]
@@ -75,13 +56,13 @@ async fn weigh_scale(state: tauri::State<'_, Mutex<AppData>>) -> Result<f64, App
             .ok_or(AppError::NoScaleConnected)?
     };
     let weight = scale.get_weight()?;
-    let raw = scale.get_raw_reading()?;
     state.lock().unwrap().scale = Some(scale);
     Ok(weight.get_amount())
 }
 #[tauri::command(async)]
 async fn save_libra_changes(libra: Libra) -> Result<(), AppError> {
-    libra.edit_config_file(&Path::new(&env::var("HOME")?).join(CONFIG_PATH))?;
+    let path = &Path::new(&env::var("HOME")?).join(CONFIG_PATH);
+    add_or_create_config(libra, path)?;
     Ok(())
 }
 #[tauri::command(async)]
@@ -94,61 +75,39 @@ async fn find_connected_phidgets() -> Result<Vec<isize>, AppError> {
     }
 }
 #[tauri::command(async)]
-async fn push_changes_to_cloud(libra: Libra) -> Result<(), AppError> {
-    let url = format!("{}/{}", CONFIG_BACKEND_PATH, libra.device);
-    let _response = reqwest::Client::new()
-        .put(url)
-        .json(&libra.config)
-        .timeout(std::time::Duration::from_secs(60))
-        .send()
-        .await?
-        .text()
-        .await?;
+async fn get_config_from_cloud(
+    state: tauri::State<'_, Mutex<AppData>>,
+    device: Device,
+) -> Result<Libra, AppError> {
+    let backend = state.lock().unwrap().get_backend()?;
+    let config = backend.get_config_async(device.clone()).await?;
+    let libra = Libra { config, device };
+    Ok(libra)
+}
+#[tauri::command(async)]
+async fn push_changes_to_cloud(
+    state: tauri::State<'_, Mutex<AppData>>,
+    libra: Libra,
+) -> Result<(), AppError> {
+    let backend = state.lock().unwrap().get_backend()?;
+    backend.edit_config_async(libra.device, libra.config).await?;
     Ok(())
 }
-#[tauri::command(async)]
-async fn create_new_device(model: Model, config: Config) -> Result<Device, AppError> {
-    let url = format!("{}/{:?}", CONFIG_BACKEND_PATH, model);
-    let response_text = reqwest::Client::new()
-        .post(url)
-        .json(&config)
-        .timeout(std::time::Duration::from_secs(60))
-        .send()
-        .await?
-        .text()
-        .await?;
-    let device_str = response_text.trim().trim_matches('"');
-
-    let model_str = format!("{:?}", model);
-    let prefix_to_strip = format!("{}-", model_str);
-
-    let number_str = device_str.strip_prefix(&prefix_to_strip).ok_or_else(|| {
-        AppError::InvalidResponse(format!(
-            "Expected response to start with '{}', but got '{}'",
-            prefix_to_strip, device_str
-        ))
-    })?;
-
-    // Parse the number string into an integer.
-    let number = number_str.parse::<usize>().map_err(|e| {
-        AppError::InvalidResponse(format!(
-            "Failed to parse device number from '{}': {}",
-            number_str, e
-        ))
-    })?;
-
-    let device = Device { model, number };
-    Ok(device)
+#[tauri::command]
+async fn create_new_device(
+    state: tauri::State<'_, Mutex<AppData>>,
+    model: Model,
+    config: Config,
+) -> Result<Device, AppError> {
+    let backend = state.lock().unwrap().get_backend()?;
+    let new_device = backend.make_new_device_async(model, config).await?;
+    Ok(new_device)
 }
 #[tauri::command(async)]
-async fn calibrate_empty(state: tauri::State<'_, Mutex<AppData>>) -> Result<(), AppError> {
+async fn calibrate_empty(state: tauri::State<'_, Mutex<AppData>>, libra: Libra) -> Result<(), AppError> {
     let scale = {
-        state
-            .lock()
-            .unwrap()
-            .scale
-            .take()
-            .ok_or(AppError::NoScaleConnected)?
+        state.lock().unwrap().scale = None;
+        DisconnectedScale::new(libra.config, libra.device).connect()?
     };
     let reading = scale.get_raw_reading()?;
     let mut state = state.lock().unwrap();
@@ -196,6 +155,12 @@ async fn finish_calibration(
 pub fn run() {
     tauri::Builder::default()
         .manage(Mutex::new(AppData::new()))
+        .setup(|app| {
+            let state = app.state::<Mutex<AppData>>();
+            let mut app_data = state.lock().unwrap();
+            app_data.initialize_backend()?;
+            Ok(())
+        })
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             load_existing_config_file,

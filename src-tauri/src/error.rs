@@ -4,14 +4,8 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum AppError {
-    #[error("This feature is not yet implemented!")]
-    NotImplemented,
     #[error("Serde failed: {0}")]
     Serde(#[from] serde_json::Error),
-    #[error("Must validate device with backend before use!")]
-    DeviceUnvalidated,
-    #[error("Other Error: {0}")]
-    Other(String),
     #[error("Error with config file: {0}")]
     Menu(#[from] menu::error::Error),
     #[error("Scale Error: {0}")]
@@ -22,12 +16,16 @@ pub enum AppError {
     ScaleAlreadyConnected,
     #[error("Reqwest Error: {0}")]
     Reqwest(#[from] reqwest::Error),
-    #[error("Invalid response from backend: {0}")]
-    InvalidResponse(String),
     #[error("No empty calibration value")]
     NoEmptyCalibrationValue,
     #[error("{0}")]
     VarError(#[from] std::env::VarError),
+    #[error("Backend not initialized")]
+    BackendNotInitialized,
+    #[error("Backend already initialized")]
+    BackendAlreadyInitialized,
+    #[error("Tauri Error: {0}")]
+    Tauri(#[from] tauri::Error),
 }
 
 impl Serialize for AppError {

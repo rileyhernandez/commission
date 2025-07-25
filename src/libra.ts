@@ -1,13 +1,11 @@
-
-
 export interface Libra {
     config: Config,
     device: Device,
 }
 
 export interface Config {
-    phidgetId: number,
-    loadCellId: number,
+    phidget_id: number,
+    load_cell_id: number,
     gain: number,
     offset: number,
     location: string,
