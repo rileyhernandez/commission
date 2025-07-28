@@ -42,6 +42,5 @@ export function createDefaultConfig(phidgetId: number): Config {
         offset: 0,
         location: "",
         ingredient: "",
-        test: "", // Default value for any new field
     };
 }
