@@ -20,3 +20,28 @@ export enum Model {
     IchibuV2 = "IchibuV2",
     LibraV0 = "LibraV0"
 }
+
+/**
+ * A list of Config fields that are user-editable in the UI.
+ */
+export const EDITABLE_CONFIG_FIELDS: (keyof Config)[] = ['location', 'ingredient', 'load_cell_id', 'test'];
+
+
+/**
+ * Creates a default Config object. This centralizes the creation
+ * of default configurations, so that when new fields are added to the
+ * Config interface, we only need to update it here.
+ * @param phidgetId - The phidget ID to associate with this config.
+ * @returns A default Config object.
+ */
+export function createDefaultConfig(phidgetId: number): Config {
+    return {
+        phidget_id: phidgetId,
+        load_cell_id: 0,
+        gain: 1,
+        offset: 0,
+        location: "",
+        ingredient: "",
+        test: "", // Default value for any new field
+    };
+}

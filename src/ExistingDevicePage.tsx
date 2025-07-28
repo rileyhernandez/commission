@@ -3,12 +3,19 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./App.css";
-import { Libra, Model, Device } from "./libra.ts";
+// Import createDefaultConfig
+import { Libra, Model, Device, EDITABLE_CONFIG_FIELDS, createDefaultConfig } from "./libra.ts";
 import { useTauriCommand } from "./hooks/useTauriCommand";
 import ErrorModal from "./components/ErrorModal";
 
 // To track where the loaded Libra config came from
 type LibraSource = 'cloud' | 'file' | null;
+
+// Create a default config instance to get all keys and their types.
+// This is more robust than Object.entries() on potentially incomplete data.
+const defaultConfig = createDefaultConfig(0);
+const allConfigKeys = Object.keys(defaultConfig) as (keyof typeof defaultConfig)[];
+
 
 function ExistingDevicePage() {
     const [status, setStatus] = useState("Ready.");
@@ -363,9 +370,13 @@ function ExistingDevicePage() {
 
                         <h4>Configuration</h4>
                         <div className="form-grid">
-                            {Object.entries(libra.config).map(([key, value]) => {
-                                const isEditable = key === 'location' || key === 'ingredient';
+                            {allConfigKeys.map((key) => {
+                                // Get the value from the actual libra config.
+                                const value = libra.config[key as keyof typeof libra.config];
+                                const isEditable = EDITABLE_CONFIG_FIELDS.includes(key);
                                 const label = formatLabel(key);
+                                // Determine the input type from our default config object.
+                                const inputType = typeof defaultConfig[key] === 'number' ? 'number' : 'text';
 
                                 return (
                                     <div className="form-row" key={key}>
@@ -373,8 +384,8 @@ function ExistingDevicePage() {
                                         <input
                                             id={key}
                                             name={key}
-                                            type={typeof value === 'number' ? 'number' : 'text'}
-                                            value={value}
+                                            type={inputType}
+                                            value={value ?? ''} // Use nullish coalescing for potentially undefined values
                                             onChange={handleConfigChange}
                                             readOnly={!isEditable}
                                             disabled={isLoading}
@@ -427,12 +438,22 @@ function ExistingDevicePage() {
                                     deletingLibra.model === item.device.model &&
                                     deletingLibra.number === item.device.number;
 
+                                // Dynamically create a description from editable string fields that have a value
+                                const description = EDITABLE_CONFIG_FIELDS
+                                    .map(key => item.config[key as keyof typeof item.config])
+                                    .filter(value => typeof value === 'string' && value)
+                                    .join(' - ');
+
                                 return (
                                     <li key={`${item.device.model}-${item.device.number}-${index}`} className="list-item">
                                         <span>
                                             {item.device.model}-{item.device.number}
-                                            <br />
-                                            <small>({item.config.location} - {item.config.ingredient})</small>
+                                            {description && (
+                                                <>
+                                                    <br />
+                                                    <small>({description})</small>
+                                                </>
+                                            )}
                                         </span>
                                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                                             <button onClick={() => handleLibraSelect(item)} disabled={isLoading}>

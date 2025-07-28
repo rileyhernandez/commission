@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import "./App.css";
 import { useTauriCommand } from "./hooks/useTauriCommand";
 import ErrorModal from "./components/ErrorModal";
-import { Libra, Model, Device } from "./libra.ts";
+import { Libra, Model, Device, createDefaultConfig, EDITABLE_CONFIG_FIELDS } from "./libra.ts";
 
 function HomePage() {
     const [status, setStatus] = useState("Ready to begin.");
@@ -73,16 +73,9 @@ function HomePage() {
                 model: Model.LibraV0,
                 number: 0,
             },
-            config: {
-                phidget_id: phidgetId, // Changed from phidgetId
-                gain: 1,
-                offset: 0,
-                load_cell_id: 0, // Changed from loadCellId
-                location: "",
-                ingredient: "",
-            },
+            // Use the factory function here
+            config: createDefaultConfig(phidgetId),
         };
-
 
         setNewLibra(defaultLibra);
         setSelectionModalOpen(false); // Close the phidget selection modal
@@ -121,7 +114,7 @@ function HomePage() {
     // Combine all loading states for disabling parts of the UI
     const isLoading = isLoadingPhidgets || isCommissioning;
 
-    // A helper to make form labels more readable (e.g., "loadCellId" -> "Load Cell Id")
+    // A helper to make form labels more readable (e.g., "load_cell_id" -> "Load Cell Id")
     const formatLabel = (s: string) => {
         const withSpaces = s.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1');
         return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1);
@@ -177,7 +170,8 @@ function HomePage() {
 
                             <div className="form-grid" style={{marginTop: '1.5rem'}}>
                                 {Object.entries(newLibra.config).map(([key, value]) => {
-                                    const isEditable = ['location', 'ingredient', 'load_cell_id'].includes(key); // Changed from 'loadCellId'
+                                    // Use the imported constant for checking editability
+                                    const isEditable = EDITABLE_CONFIG_FIELDS.includes(key as keyof Libra['config']);
                                     const label = formatLabel(key);
 
                                     return (
@@ -192,8 +186,8 @@ function HomePage() {
                                                 readOnly={!isEditable}
                                                 disabled={isLoading}
                                                 placeholder={
-                                                    key === 'location' ? "e.g., Kitchen Counter" :
-                                                        key === 'ingredient' ? "e.g., Coffee Beans" : ""
+                                                    key === 'location' ? "345 Spear, 4th Floor" :
+                                                        key === 'ingredient' ? "Pistachios" : ""
                                                 }
                                             />
                                         </div>
