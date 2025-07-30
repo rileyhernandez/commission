@@ -10,7 +10,17 @@ export interface Config {
     offset: number,
     location: string,
     ingredient: string,
+    heartbeat_period: Duration,
+    buffer_length: number,
+    max_noise: number,
+    phidget_sample_period: Duration
 }
+
+export interface Duration {
+    secs: number,
+    nanos: number,
+}
+
 export interface Device {
     model: Model,
     number: number,
@@ -24,7 +34,15 @@ export enum Model {
 /**
  * A list of Config fields that are user-editable in the UI.
  */
-export const EDITABLE_CONFIG_FIELDS: (keyof Config)[] = ['location', 'ingredient', 'load_cell_id'];
+export const EDITABLE_CONFIG_FIELDS: (keyof Config)[] = [
+    'location',
+    'ingredient',
+    'load_cell_id',
+    'buffer_length',
+    "max_noise",
+    "heartbeat_period",
+    "phidget_sample_period"
+];
 
 
 /**
@@ -42,5 +60,9 @@ export function createDefaultConfig(phidgetId: number): Config {
         offset: 0,
         location: "",
         ingredient: "",
+        heartbeat_period: { secs: 60, nanos: 0 },
+        buffer_length: 10,
+        max_noise: 3,
+        phidget_sample_period: { secs: 0, nanos: 250_000_000 }
     };
 }

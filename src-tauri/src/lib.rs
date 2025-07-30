@@ -140,7 +140,6 @@ async fn finish_calibration(
         let new_scale = Scale::new(
             config.clone(),
             device.clone(),
-            std::time::Duration::from_millis(100),
         )?;
         let mut state = state.lock().unwrap();
         state.scale = Some(new_scale);

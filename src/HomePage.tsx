@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import "./App.css";
 import { useTauriCommand } from "./hooks/useTauriCommand";
 import ErrorModal from "./components/ErrorModal";
-import { Libra, Model, Device, createDefaultConfig, EDITABLE_CONFIG_FIELDS } from "./libra.ts";
+import { Libra, Model, Device, createDefaultConfig, EDITABLE_CONFIG_FIELDS, Duration } from "./libra.ts";
 
 function HomePage() {
     const [status, setStatus] = useState("Ready to begin.");
@@ -85,16 +85,30 @@ function HomePage() {
 
     const handleConfigChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!newLibra) return;
-        const { name, value, type } = e.target;
+        const { name, value } = e.target;
+
         setNewLibra(prevLibra => {
             if (!prevLibra) return null;
+
+            const newConfig = { ...prevLibra.config };
+            const parsedValue = parseFloat(value) || 0;
+
+            if (name === 'heartbeat_period') {
+                newConfig.heartbeat_period = { secs: parsedValue, nanos: 0 };
+            } else if (name === 'phidget_sample_period') {
+                const totalMs = parsedValue;
+                const secs = Math.floor(totalMs / 1000);
+                const nanos = (totalMs % 1000) * 1_000_000;
+                newConfig.phidget_sample_period = { secs, nanos };
+            } else if (e.target.type === 'number') {
+                (newConfig as any)[name] = parsedValue;
+            } else {
+                (newConfig as any)[name] = value;
+            }
+
             return {
                 ...prevLibra,
-                config: {
-                    ...prevLibra.config,
-                    // Handle empty number fields gracefully
-                    [name]: type === 'number' ? parseFloat(value) || 0 : value,
-                },
+                config: newConfig,
             };
         });
     };
@@ -169,10 +183,31 @@ function HomePage() {
                             </p>
 
                             <div className="form-grid" style={{marginTop: '1.5rem'}}>
-                                {Object.entries(newLibra.config).map(([key, value]) => {
-                                    // Use the imported constant for checking editability
+                                {Object.entries(newLibra.config).map(([key, configValue]) => {
                                     const isEditable = EDITABLE_CONFIG_FIELDS.includes(key as keyof Libra['config']);
-                                    const label = formatLabel(key);
+
+                                    let label: string;
+                                    let value: string | number;
+                                    let type: string;
+
+                                    if (key === 'heartbeat_period') {
+                                        const duration = configValue as Duration;
+                                        label = "Heartbeat Period (s)";
+                                        value = duration.secs;
+                                        type = 'number';
+                                    } else if (key === 'phidget_sample_period') {
+                                        const duration = configValue as Duration;
+                                        label = "Phidget Sample Period (ms)";
+                                        value = (duration.secs * 1000) + (duration.nanos / 1_000_000);
+                                        type = 'number';
+                                    } else if (typeof configValue === 'object' && configValue !== null) {
+                                        // Don't render inputs for other complex objects that we don't explicitly handle
+                                        return null;
+                                    } else {
+                                        label = formatLabel(key);
+                                        value = configValue;
+                                        type = typeof configValue === 'number' ? 'number' : 'text';
+                                    }
 
                                     return (
                                         <div className="form-row" key={key}>
@@ -180,7 +215,7 @@ function HomePage() {
                                             <input
                                                 id={key}
                                                 name={key}
-                                                type={typeof value === 'number' ? 'number' : 'text'}
+                                                type={type}
                                                 value={value}
                                                 onChange={handleConfigChange}
                                                 readOnly={!isEditable}

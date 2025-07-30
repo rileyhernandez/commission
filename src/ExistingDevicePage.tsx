@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./App.css";
-// Import createDefaultConfig
-import { Libra, Model, Device, EDITABLE_CONFIG_FIELDS, createDefaultConfig } from "./libra.ts";
+// Import createDefaultConfig and Duration
+import { Libra, Model, Device, EDITABLE_CONFIG_FIELDS, createDefaultConfig, Duration } from "./libra.ts";
 import { useTauriCommand } from "./hooks/useTauriCommand";
 import ErrorModal from "./components/ErrorModal";
 
@@ -256,20 +256,32 @@ function ExistingDevicePage() {
         removeFromConfig({ device: libraToDelete.device });
     };
 
-
-
     const handleConfigChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!libra) return;
-        const { name, value, type } = e.target;
+        const { name, value } = e.target;
+
         setLibra(prevLibra => {
             if (!prevLibra) return null;
+
+            const newConfig = { ...prevLibra.config };
+            const parsedValue = parseFloat(value) || 0;
+
+            if (name === 'heartbeat_period') {
+                newConfig.heartbeat_period = { secs: parsedValue, nanos: 0 };
+            } else if (name === 'phidget_sample_period') {
+                const totalMs = parsedValue;
+                const secs = Math.floor(totalMs / 1000);
+                const nanos = (totalMs % 1000) * 1_000_000;
+                newConfig.phidget_sample_period = { secs, nanos };
+            } else if (e.target.type === 'number') {
+                (newConfig as any)[name] = parsedValue;
+            } else {
+                (newConfig as any)[name] = value;
+            }
+
             return {
                 ...prevLibra,
-                config: {
-                    ...prevLibra.config,
-                    // Handle empty number fields gracefully
-                    [name]: type === 'number' ? parseFloat(value) || 0 : value,
-                },
+                config: newConfig,
             };
         });
     };
@@ -371,12 +383,31 @@ function ExistingDevicePage() {
                         <h4>Configuration</h4>
                         <div className="form-grid">
                             {allConfigKeys.map((key) => {
-                                // Get the value from the actual libra config.
-                                const value = libra.config[key as keyof typeof libra.config];
+                                const configValue = libra.config[key as keyof typeof libra.config];
                                 const isEditable = EDITABLE_CONFIG_FIELDS.includes(key);
-                                const label = formatLabel(key);
-                                // Determine the input type from our default config object.
-                                const inputType = typeof defaultConfig[key] === 'number' ? 'number' : 'text';
+
+                                let label: string;
+                                let value: string | number;
+                                let inputType: string;
+
+                                if (key === 'heartbeat_period') {
+                                    const duration = configValue as Duration;
+                                    label = "Heartbeat Period (s)";
+                                    value = duration?.secs ?? 0;
+                                    inputType = 'number';
+                                } else if (key === 'phidget_sample_period') {
+                                    const duration = configValue as Duration;
+                                    label = "Phidget Sample Period (ms)";
+                                    value = duration ? (duration.secs * 1000) + (duration.nanos / 1_000_000) : 0;
+                                    inputType = 'number';
+                                } else if (typeof configValue === 'object' && configValue !== null) {
+                                    // Don't render inputs for other complex objects that we don't explicitly handle
+                                    return null;
+                                } else {
+                                    label = formatLabel(key);
+                                    value = configValue ?? '';
+                                    inputType = typeof defaultConfig[key] === 'number' ? 'number' : 'text';
+                                }
 
                                 return (
                                     <div className="form-row" key={key}>
@@ -385,7 +416,7 @@ function ExistingDevicePage() {
                                             id={key}
                                             name={key}
                                             type={inputType}
-                                            value={value ?? ''} // Use nullish coalescing for potentially undefined values
+                                            value={value}
                                             onChange={handleConfigChange}
                                             readOnly={!isEditable}
                                             disabled={isLoading}
