@@ -35,6 +35,8 @@ function ExistingDevicePage() {
 
     // State for the calibration modal
     const [isCalibrationModalOpen, setCalibrationModalOpen] = useState(false);
+    // State for the new weigh modal
+    const [isWeighModalOpen, setWeighModalOpen] = useState(false);
     // State for multi-step calibration: 1: Empty, 2: Test Weight, 3: Success/Weigh
     const [calibrationStep, setCalibrationStep] = useState<1 | 2 | 3>(1);
     const [testWeight, setTestWeight] = useState(0);
@@ -80,6 +82,13 @@ function ExistingDevicePage() {
         onError,
     });
 
+    const { execute: dropScale } = useTauriCommand<void, {}>('drop_scale', {
+        onSuccess: () => {
+            setStatus("Scale dropped successfully.");
+        },
+        onError,
+    })
+
     const { execute: loadFromFile, isLoading: isLoadingFromFile } = useTauriCommand<Libra[]>('load_existing_config_file', {
         onSuccess: (result) => {
             if (result && result.length > 0) {
@@ -106,6 +115,16 @@ function ExistingDevicePage() {
         }
     };
 
+    const handleConnectWeighError = (error: string, payload?: { libra: Libra }) => {
+        if (error.includes("Scale Already Connected")) {
+            setStatus(`Scale already connected. Opening weighing interface for ${payload?.libra.device.model}-${payload?.libra.device.number}.`);
+            setMeasuredWeight(null); // Reset previous weight
+            setWeighModalOpen(true);
+        } else {
+            onError(error);
+        }
+    };
+
     const { execute: connectAndCalibrate, isLoading: isConnectingForCalibration } = useTauriCommand<void, { libra: Libra }>('connect_scale', {
         onSuccess: (_, payload) => {
             setStatus(`Connected to ${payload?.libra.device.model}-${payload?.libra.device.number}. Opening calibration interface.`);
@@ -116,6 +135,15 @@ function ExistingDevicePage() {
             setCalibrationModalOpen(true);
         },
         onError: handleConnectError,
+    });
+
+    const { execute: connectForWeighing, isLoading: isConnectingForWeighing } = useTauriCommand<void, { libra: Libra }>('connect_scale', {
+        onSuccess: (_, payload) => {
+            setStatus(`Connected to ${payload?.libra.device.model}-${payload?.libra.device.number}. Opening weighing interface.`);
+            setMeasuredWeight(null); // Reset previous weight
+            setWeighModalOpen(true);
+        },
+        onError: handleConnectWeighError,
     });
 
     // Command to perform the first step of calibration (empty scale)
@@ -297,6 +325,15 @@ function ExistingDevicePage() {
         await connectAndCalibrate({ libra });
     };
 
+    const handleWeighClick = async () => {
+        if (!libra) {
+            setStatus("Please select a device before weighing.");
+            return;
+        }
+        setStatus(`Attempting to connect to ${libra.device.model}-${libra.device.number} for weighing...`);
+        await connectForWeighing({ libra });
+    };
+
     const handleFinishCalibration = () => {
         if (!libra || testWeight <= 0) {
             onError("Please enter a valid, positive test weight.");
@@ -327,7 +364,7 @@ function ExistingDevicePage() {
 
 
     // Combine all loading states for disabling parts of the UI
-    const isLoading = isFindingInCloud || isLoadingFromFile || isConnectingForCalibration || isSaving || isAddingToConfigFile || isPushingToCloud || isRemovingFromConfig || isCalibratingEmpty || isFinishingCalibration || isWeighing || isSavingCalibration;
+    const isLoading = isFindingInCloud || isLoadingFromFile || isConnectingForCalibration || isConnectingForWeighing || isSaving || isAddingToConfigFile || isPushingToCloud || isRemovingFromConfig || isCalibratingEmpty || isFinishingCalibration || isWeighing || isSavingCalibration;
 
     return (
         <>
@@ -426,11 +463,7 @@ function ExistingDevicePage() {
                             })}
                         </div>
 
-                        <div className="button-group">
-                            <button onClick={handleCalibrateClick} disabled={isLoading}>
-                                {isConnectingForCalibration ? 'Connecting...' : 'Calibrate'}
-                            </button>
-
+                        <div className="button-grid" >
                             {/* --- CONTEXTUAL BUTTONS --- */}
                             {libraSource === 'cloud' && (
                                 // If from cloud, the main action is to save it to the local config file.
@@ -438,7 +471,6 @@ function ExistingDevicePage() {
                                     {isAddingToConfigFile ? 'Saving...' : 'Add to Config File'}
                                 </button>
                             )}
-
                             {libraSource === 'file' && (
                                 // If from a local file, we can save local edits or push them to the cloud.
                                 <>
@@ -450,6 +482,14 @@ function ExistingDevicePage() {
                                     </button>
                                 </>
                             )}
+
+                            {/* --- PRIMARY ACTIONS --- */}
+                            <button onClick={handleWeighClick} disabled={isLoading} className="button">
+                                {isConnectingForWeighing ? 'Connecting...' : 'Weigh'}
+                            </button>
+                            <button onClick={handleCalibrateClick} disabled={isLoading} className="button">
+                                {isConnectingForCalibration ? 'Connecting...' : 'Calibrate'}
+                            </button>
                         </div>
                     </div>
                 )}
@@ -644,6 +684,44 @@ function ExistingDevicePage() {
                                 </div>
                             </>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {isWeighModalOpen && libra && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h2>Weigh Item</h2>
+                        <p style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                            Using <strong>{libra.device.model}-{libra.device.number}</strong>
+                        </p>
+
+                        <div style={{
+                            textAlign: 'center',
+                            fontSize: '2.5rem',
+                            fontWeight: 'bold',
+                            margin: '1.5rem 0',
+                            fontFamily: 'monospace',
+                            color: measuredWeight === null ? 'var(--color-border)' : 'var(--color-primary)',
+                            backgroundColor: 'var(--color-background)',
+                            padding: '1rem',
+                            borderRadius: 'var(--border-radius)'
+                        }}>
+                            {measuredWeight !== null ? `${measuredWeight.toFixed(2)} g` : '--.-- g'}
+                        </div>
+
+                        <div className="button-group" style={{ justifyContent: 'space-between', marginTop: '1rem' }}>
+                            <button onClick={async () => { await dropScale(); setWeighModalOpen(false); setStatus("Ready."); }} disabled={isWeighing}>
+                                Close
+                            </button>
+                            <button
+                                onClick={() => weighScale({ libra })}
+                                disabled={isWeighing}
+                                className="button"
+                            >
+                                {isWeighing ? 'Weighing...' : 'Weigh'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

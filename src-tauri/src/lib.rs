@@ -150,6 +150,12 @@ async fn finish_calibration(
         Err(AppError::NoEmptyCalibrationValue)
     }
 }
+#[tauri::command(async)]
+async fn drop_scale(state: tauri::State<'_, Mutex<AppData>>) -> Result<(), AppError> {
+    let mut state = state.lock().unwrap();
+    state.scale = None;
+    Ok(())
+}
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -174,6 +180,7 @@ pub fn run() {
             add_to_config_file,
             calibrate_empty,
             finish_calibration,
+            drop_scale,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

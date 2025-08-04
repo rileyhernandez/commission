@@ -337,6 +337,7 @@ select {
 .button-group {
   display: flex;
   justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 0.75rem;
   margin-top: 1.5rem;
   padding-top: 1rem;
