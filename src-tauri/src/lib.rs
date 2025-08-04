@@ -110,7 +110,7 @@ async fn calibrate_empty(state: tauri::State<'_, Mutex<AppData>>, libra: Libra) 
         state.lock().unwrap().scale = None;
         DisconnectedScale::new(libra.config, libra.device).connect()?
     };
-    let reading = scale.weigh_once_settled(3, Duration::from_secs(5))?;
+    let reading = scale.raw_read_once_settled(3, Duration::from_secs(5), 0.1)?;
     let mut state = state.lock().unwrap();
     state.scale = Some(scale);
     state.empty_calibration_reading = Some(reading);
@@ -123,7 +123,7 @@ async fn finish_calibration(
 ) -> Result<Libra, AppError> {
     let empty_calibration_reading_option = { state.lock().unwrap().empty_calibration_reading };
     if let Some(empty_calibration_reading) = empty_calibration_reading_option {
-        let scale = {
+        let mut scale = {
             state
                 .lock()
                 .unwrap()
@@ -131,12 +131,10 @@ async fn finish_calibration(
                 .take()
                 .ok_or(AppError::NoScaleConnected)?
         };
-        let reading = scale.weigh_once_settled(3, Duration::from_secs(5))?;
+        let reading = scale.raw_read_once_settled(3, Duration::from_secs(5), 0.1)?;
         let device = scale.get_device();
+        scale.set_calibration(empty_calibration_reading, reading, test_weight);
         let mut config = scale.get_config();
-        config.gain = test_weight / (reading - empty_calibration_reading);
-        config.offset =
-            test_weight * empty_calibration_reading / (reading - empty_calibration_reading);
         scale.disconnect()?;
         let new_scale = Scale::new(
             config.clone(),

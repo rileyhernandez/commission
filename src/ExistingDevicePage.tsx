@@ -316,6 +316,7 @@ function ExistingDevicePage() {
 
     // The calibrate button handler is now simpler.
     const handleCalibrateClick = async () => {
+        await dropScale();
         if (!libra) {
             setStatus("Please select a device before calibrating.");
             return;
