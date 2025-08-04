@@ -7,6 +7,7 @@ use scale::scale::{DisconnectedScale, Scale};
 use std::env;
 use std::path::Path;
 use std::sync::Mutex;
+use std::time::Duration;
 use tauri::Manager;
 
 pub const CONFIG_PATH: &str = ".config/libra/config.toml";
@@ -109,7 +110,7 @@ async fn calibrate_empty(state: tauri::State<'_, Mutex<AppData>>, libra: Libra) 
         state.lock().unwrap().scale = None;
         DisconnectedScale::new(libra.config, libra.device).connect()?
     };
-    let reading = scale.get_raw_reading()?;
+    let reading = scale.weigh_once_settled(3, Duration::from_secs(5))?;
     let mut state = state.lock().unwrap();
     state.scale = Some(scale);
     state.empty_calibration_reading = Some(reading);
@@ -130,7 +131,7 @@ async fn finish_calibration(
                 .take()
                 .ok_or(AppError::NoScaleConnected)?
         };
-        let reading = scale.get_raw_reading()?;
+        let reading = scale.weigh_once_settled(3, Duration::from_secs(5))?;
         let device = scale.get_device();
         let mut config = scale.get_config();
         config.gain = test_weight / (reading - empty_calibration_reading);
