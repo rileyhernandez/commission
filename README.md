@@ -1,8 +1,9 @@
-# Tauri + React + Typescript
+# Commission
 
-This template should help get you started developing with Tauri, React and Typescript in Vite.
+For commissioning Caldo products
 
-## Recommended IDE Setup
+## Supported Product Lines:
 
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+Libra, Ichibu (WIP)
+
 # commission

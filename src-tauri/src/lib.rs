@@ -56,9 +56,10 @@ async fn weigh_scale(state: tauri::State<'_, Mutex<AppData>>) -> Result<f64, App
             .take()
             .ok_or(AppError::NoScaleConnected)?
     };
-    let weight = scale.get_weight()?;
+    let weight = scale.get_weight()?.get_amount();
     state.lock().unwrap().scale = Some(scale);
-    Ok(weight.get_amount())
+    println!("DEBUG: {weight}");
+    Ok(weight)
 }
 #[tauri::command(async)]
 async fn save_libra_changes(libra: Libra) -> Result<(), AppError> {
