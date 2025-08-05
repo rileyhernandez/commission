@@ -35,6 +35,8 @@ export enum Model {
  * A list of Config fields that are user-editable in the UI.
  */
 export const EDITABLE_CONFIG_FIELDS: (keyof Config)[] = [
+    'phidget_id',
+    'load_cell_id',
     'location',
     'ingredient',
     'load_cell_id',
