@@ -1,5 +1,5 @@
 use crate::error::AppError;
-use menu::backend::{ConfigBackend, CONFIG_BACKEND_URL};
+use menu::backend::{ConfigBackend, BACKEND_URL};
 use scale::scale::Scale;
 use std::env;
 use std::path::Path;
@@ -22,7 +22,7 @@ impl AppData {
     pub fn initialize_backend(&mut self) -> Result<(), AppError> {
         if self.backend.is_none() {
             let auth_token = env::var("AUTH_TOKEN")?;
-            let backend = ConfigBackend::new(CONFIG_BACKEND_URL.into(), auth_token);
+            let backend = ConfigBackend::new(BACKEND_URL.into(), auth_token);
             self.backend = Some(backend);
             Ok(())
         } else {

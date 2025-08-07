@@ -135,7 +135,7 @@ async fn finish_calibration(
         let reading = scale.raw_read_once_settled(3, Duration::from_secs(5), 0.1)?;
         let device = scale.get_device();
         scale.set_calibration(empty_calibration_reading, reading, test_weight);
-        let mut config = scale.get_config();
+        let config = scale.get_config();
         scale.disconnect()?;
         let new_scale = Scale::new(
             config.clone(),
