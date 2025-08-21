@@ -10,26 +10,26 @@ use std::sync::Mutex;
 use std::time::Duration;
 use tauri::Manager;
 
-pub const CONFIG_PATH: &str = ".config/libra/config.toml";
+pub const CONFIG_PATH: &str = "/etc/libra/config.toml";
 
 mod error;
 mod state;
 #[tauri::command(async)]
 async fn load_existing_config_file() -> Result<Vec<Libra>, AppError> {
-    let path = Path::new(&env::var("HOME")?).join(CONFIG_PATH);
-    let libras = Libra::read_as_vec(&path)?;
+    let path = Path::new(CONFIG_PATH);
+    let libras = Libra::read_as_vec(path)?;
     Ok(libras)
 }
 #[tauri::command(async)]
 async fn remove_from_config_file(device: Device) -> Result<(), AppError> {
-    let path = Path::new(&env::var("HOME")?).join(CONFIG_PATH);
-    Libra::remove_from_config_file(device, &path)?;
+    let path = Path::new(CONFIG_PATH);
+    Libra::remove_from_config_file(device, path)?;
     Ok(())
 }
 #[tauri::command(async)]
 async fn add_to_config_file(libra: Libra) -> Result<(), AppError> {
-    let path = Path::new(&env::var("HOME")?).join(CONFIG_PATH);
-    add_or_create_config(libra, &path)?;
+    let path = Path::new(CONFIG_PATH);
+    add_or_create_config(libra, path)?;
     Ok(())
 }
 #[tauri::command(async)]
@@ -63,7 +63,7 @@ async fn weigh_scale(state: tauri::State<'_, Mutex<AppData>>) -> Result<f64, App
 }
 #[tauri::command(async)]
 async fn save_libra_changes(libra: Libra) -> Result<(), AppError> {
-    let path = &Path::new(&env::var("HOME")?).join(CONFIG_PATH);
+    let path = &Path::new(CONFIG_PATH);
     add_or_create_config(libra, path)?;
     Ok(())
 }
