@@ -23,7 +23,7 @@ export interface Duration {
 
 export interface Device {
     model: Model,
-    number: number,
+    serial_number: string,
 }
 export enum Model {
     IchibuV1 = "IchibuV1",

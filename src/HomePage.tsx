@@ -71,7 +71,7 @@ function HomePage() {
         const defaultLibra: Libra = {
             device: {
                 model: Model.LibraV0,
-                number: 0,
+                serial_number: "0",
             },
             // Use the factory function here
             config: createDefaultConfig(phidgetId),

@@ -17,9 +17,10 @@ const defaultConfig = createDefaultConfig(0);
 const allConfigKeys = Object.keys(defaultConfig) as (keyof typeof defaultConfig)[];
 
 
+
 function ExistingDevicePage() {
     const [status, setStatus] = useState("Ready.");
-    const [serial, setSerial] = useState(0);
+    const [serial, setSerial] = useState("");
     const [model, setModel] = useState<Model>(Model.LibraV0);
     const [libra, setLibra] = useState<Libra | null>(null);
     const [libraSource, setLibraSource] = useState<LibraSource>(null);
@@ -59,7 +60,7 @@ function ExistingDevicePage() {
             // making it behave as if it were just loaded from the local config file.
             // This gives the user options to save further changes or sync to the cloud.
             setLibraSource('cloud');
-            setStatus(`Loaded newly commissioned device: ${newLibra.device.model}-${newLibra.device.number}`);
+            setStatus(`Loaded newly commissioned device: ${newLibra.device.model}-${newLibra.device.serial_number}`);
 
             // Clean the location state to prevent this from re-triggering
             navigate(".", { replace: true, state: {} });
@@ -75,7 +76,7 @@ function ExistingDevicePage() {
     // --- Hook Definitions ---
     const { execute: findInCloud, isLoading: isFindingInCloud } = useTauriCommand<Libra, { device: Device }>('get_config_from_cloud', {
         onSuccess: (result) => {
-            setStatus(`Device found: ${result.device.model}-${result.device.number}`);
+            setStatus(`Device found: ${result.device.model}-${result.device.serial_number}`);
             setLibra(result);
             setLibraSource('cloud'); // Set the source to 'cloud'
         },
@@ -104,7 +105,7 @@ function ExistingDevicePage() {
 
     const handleConnectError = (error: string, payload?: { libra: Libra }) => {
         if (error.includes("Scale Already Connected")) {
-            setStatus(`Scale already connected. Opening calibration interface for ${payload?.libra.device.model}-${payload?.libra.device.number}.`);
+            setStatus(`Scale already connected. Opening calibration interface for ${payload?.libra.device.model}-${payload?.libra.device.serial_number}.`);
             // Reset calibration state before opening the modal
             setCalibrationStep(1);
             setTestWeight(0);
@@ -117,7 +118,7 @@ function ExistingDevicePage() {
 
     const handleConnectWeighError = (error: string, payload?: { libra: Libra }) => {
         if (error.includes("Scale Already Connected")) {
-            setStatus(`Scale already connected. Opening weighing interface for ${payload?.libra.device.model}-${payload?.libra.device.number}.`);
+            setStatus(`Scale already connected. Opening weighing interface for ${payload?.libra.device.model}-${payload?.libra.device.serial_number}.`);
             setMeasuredWeight(null); // Reset previous weight
             setWeighModalOpen(true);
         } else {
@@ -127,7 +128,7 @@ function ExistingDevicePage() {
 
     const { execute: connectAndCalibrate, isLoading: isConnectingForCalibration } = useTauriCommand<void, { libra: Libra }>('connect_scale', {
         onSuccess: (_, payload) => {
-            setStatus(`Connected to ${payload?.libra.device.model}-${payload?.libra.device.number}. Opening calibration interface.`);
+            setStatus(`Connected to ${payload?.libra.device.model}-${payload?.libra.device.serial_number}. Opening calibration interface.`);
             // Reset calibration state before opening the modal
             setCalibrationStep(1);
             setTestWeight(0);
@@ -139,7 +140,7 @@ function ExistingDevicePage() {
 
     const { execute: connectForWeighing, isLoading: isConnectingForWeighing } = useTauriCommand<void, { libra: Libra }>('connect_scale', {
         onSuccess: (_, payload) => {
-            setStatus(`Connected to ${payload?.libra.device.model}-${payload?.libra.device.number}. Opening weighing interface.`);
+            setStatus(`Connected to ${payload?.libra.device.model}-${payload?.libra.device.serial_number}. Opening weighing interface.`);
             setMeasuredWeight(null); // Reset previous weight
             setWeighModalOpen(true);
         },
@@ -222,7 +223,7 @@ function ExistingDevicePage() {
 
             setAvailableLibras(prevLibras => {
                 const updatedLibras = prevLibras.filter(libra =>
-                    !(libra.device.model === payload.device.model && libra.device.number === payload.device.number)
+                    !(libra.device.model === payload.device.model && libra.device.serial_number === payload.device.serial_number)
                 );
 
                 if (updatedLibras.length === 0) {
@@ -233,7 +234,7 @@ function ExistingDevicePage() {
                 return updatedLibras;
             });
 
-            setStatus(`Device ${payload.device.model}-${payload.device.number} removed from config.`);
+            setStatus(`Device ${payload.device.model}-${payload.device.serial_number} removed from config.`);
             setDeletingLibra(null);
             setLibraToDelete(null);
         },
@@ -248,7 +249,7 @@ function ExistingDevicePage() {
     // --- Event Handlers ---
     const findExistingDevice = () => {
         setStatus("Finding device in cloud...");
-        findInCloud({ device: { model, number: serial } });
+        findInCloud({ device: { model, serial_number: serial } });
     };
 
     const loadExistingConfigFile = () => {
@@ -262,7 +263,7 @@ function ExistingDevicePage() {
         setLibra(selectedLibra);
         setLibraSource('file'); // Set the source to 'file'
         setSelectionModalOpen(false);
-        setStatus(`Selected: ${selectedLibra.device.model}-${selectedLibra.device.number}`);
+        setStatus(`Selected: ${selectedLibra.device.model}-${selectedLibra.device.serial_number}`);
     };
 
     const handleRequestDelete = (libra: Libra) => {
@@ -280,7 +281,7 @@ function ExistingDevicePage() {
 
         setConfirmDeleteModalOpen(false);
         setDeletingLibra(libraToDelete.device);
-        setStatus(`Removing ${libraToDelete.device.model}-${libraToDelete.device.number}...`);
+        setStatus(`Removing ${libraToDelete.device.model}-${libraToDelete.device.serial_number}...`);
         removeFromConfig({ device: libraToDelete.device });
     };
 
@@ -321,7 +322,7 @@ function ExistingDevicePage() {
             setStatus("Please select a device before calibrating.");
             return;
         }
-        setStatus(`Attempting to connect to ${libra.device.model}-${libra.device.number} for calibration...`);
+        setStatus(`Attempting to connect to ${libra.device.model}-${libra.device.serial_number} for calibration...`);
         // Simply execute the command. The hook's callbacks will handle success or failure.
         await connectAndCalibrate({ libra });
     };
@@ -331,7 +332,7 @@ function ExistingDevicePage() {
             setStatus("Please select a device before weighing.");
             return;
         }
-        setStatus(`Attempting to connect to ${libra.device.model}-${libra.device.number} for weighing...`);
+        setStatus(`Attempting to connect to ${libra.device.model}-${libra.device.serial_number} for weighing...`);
         await connectForWeighing({ libra });
     };
 
@@ -388,8 +389,8 @@ function ExistingDevicePage() {
                         <h2>From Cloud</h2>
                         <div className="button-grid">
                             <input
-                                onChange={(e) => setSerial(parseInt(e.target.value, 10) || 0)}
-                                type="number" min="0" value={serial}
+                                onChange={(e) => setSerial(e.target.value)}
+                                type="string" value={serial}
                                 placeholder="Enter Serial Number"
                                 disabled={isLoading}
                             />
@@ -413,7 +414,7 @@ function ExistingDevicePage() {
                     <div className="card">
                         <h3>Selected Device Details</h3>
                         <p>
-                            <strong>Device:</strong> {libra.device.model}-{libra.device.number}
+                            <strong>Device:</strong> {libra.device.model}-{libra.device.serial_number}
                             <br />
                             <small><em>(Source: {libraSource === 'cloud' ? 'Cloud' : 'Config File'})</em></small>
                         </p>
@@ -508,7 +509,7 @@ function ExistingDevicePage() {
                             {availableLibras.map((item, index) => {
                                 const isCurrentItemDeleting = isRemovingFromConfig && deletingLibra &&
                                     deletingLibra.model === item.device.model &&
-                                    deletingLibra.number === item.device.number;
+                                    deletingLibra.serial_number === item.device.serial_number;
 
                                 // Dynamically create a description from editable string fields that have a value
                                 const description = EDITABLE_CONFIG_FIELDS
@@ -517,9 +518,9 @@ function ExistingDevicePage() {
                                     .join(' - ');
 
                                 return (
-                                    <li key={`${item.device.model}-${item.device.number}-${index}`} className="list-item">
+                                    <li key={`${item.device.model}-${item.device.serial_number}-${index}`} className="list-item">
                                         <span>
-                                            {item.device.model}-{item.device.number}
+                                            {item.device.model}-{item.device.serial_number}
                                             {description && (
                                                 <>
                                                     <br />
@@ -556,7 +557,7 @@ function ExistingDevicePage() {
                         <h2>Confirm Deletion</h2>
                         <p>
                             Are you sure you want to remove device <br />
-                            <strong>{libraToDelete.device.model}-{libraToDelete.device.number}</strong>
+                            <strong>{libraToDelete.device.model}-{libraToDelete.device.serial_number}</strong>
                             <br />from the configuration file?
                         </p>
                         <p><small>This action cannot be undone.</small></p>
@@ -581,7 +582,7 @@ function ExistingDevicePage() {
                     <div className="modal-content">
                         <h2>Calibrate Device</h2>
                         <p style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                            Calibrating <strong>{libra.device.model}-{libra.device.number}</strong>
+                            Calibrating <strong>{libra.device.model}-{libra.device.serial_number}</strong>
                         </p>
 
                         {calibrationStep === 1 && (
@@ -652,7 +653,7 @@ function ExistingDevicePage() {
                                     }}>
                                         New Calibration Data
                                     </h4>
-                                    <p><strong>Device:</strong> {libra.device.model}-{libra.device.number}</p>
+                                    <p><strong>Device:</strong> {libra.device.model}-{libra.device.serial_number}</p>
                                     <p><strong>Gain:</strong> {libra.config.gain.toPrecision(8)}</p>
                                     <p><strong>Offset:</strong> {libra.config.offset.toFixed(2)}</p>
                                 </div>
@@ -694,7 +695,7 @@ function ExistingDevicePage() {
                     <div className="modal-content">
                         <h2>Weigh Item</h2>
                         <p style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                            Using <strong>{libra.device.model}-{libra.device.number}</strong>
+                            Using <strong>{libra.device.model}-{libra.device.serial_number}</strong>
                         </p>
 
                         <div style={{
